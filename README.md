@@ -2,15 +2,72 @@
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)
 
-开源 agent skill 集合，开箱即用。每个 skill 定义一种完整的工作模式，适用于任何具备子代理（SubAgent）派生能力的 agent 环境，与具体工具无关。
+**English** | [简体中文](#简体中文)
+
+## Overview
+
+skills is an open-source collection of agent skills, ready to use out of the box. Each skill defines a complete working pattern, applicable to any agent environment with subagent-spawning capability — independent of any specific tool.
 
 ## Skills
+
+| Skill | Summary | Invocation |
+|---|---|---|
+| [dispatcher](dispatcher/SKILL.md) | Dispatch mode: submit a task list; the dispatcher assigns workers to complete every task | `/dispatcher` |
+
+## dispatcher
+
+Provide a task list, and the main session takes the role of the **dispatcher**, assigning work to workers (SubAgents) one by one in serial order. The dispatcher handles exactly two responsibilities — **dispatching and acceptance**; all actual work is performed by workers.
+
+```
+Loop: order (blockers first) → dispatch → accept
+  ├─ Accepted, tasks remain  → next round
+  ├─ Accepted, all done      → final report (results + open items)
+  ├─ Rejected                → cleanup agent fills the gaps, then re-acceptance
+  └─ No dispatchable tasks   → wrap up; blocked tasks recorded as open items
+```
+
+Reliability by design:
+
+- **Workers run on fresh context** — every dispatch order must carry six elements (work items, operating procedure, required reading, settled decisions, hard constraints, completion actions) and depends on no session history
+- **Acceptance relies on actual output**; summaries serve only as a clue — preventing falsely reported completion
+- **Generic slots** — the semantics of tasks, submission, and verification are defined by the invoking instruction; the same process can dispatch any kind of work
+- **Interruption recovery** — when a worker is stopped or errors out: unfinished artifacts are taken over by a cleanup agent; with a clean workspace, the remaining tasks are redispatched as-is
+
+### Usage
+
+Prerequisite: the environment must be able to spawn subagents.
+
+```
+/dispatcher <task list; optionally specify a procedure and decision authority>
+```
+
+User-invoked: the model never triggers it automatically; it runs only on explicit user command.
+
+## Installation
+
+```bash
+git clone https://github.com/Buktal/skills.git
+cp -r skills/dispatcher <your-agent-skill-directory>/
+# Common location: ~/.agents/skills/ (cross-tool convention), or your tool's own skill directory
+```
+
+## License
+
+Released under the [MIT License](LICENSE).
+
+---
+
+## 简体中文
+
+skills 是开箱即用的开源 agent skill 集合。每个 skill 定义一种完整的工作模式，适用于任何具备子代理（SubAgent）派生能力的 agent 环境，与具体工具无关。
+
+### Skills
 
 | Skill | 简介 | 调用 |
 |---|---|---|
 | [dispatcher](dispatcher/SKILL.md) | 调度模式：提交一份任务清单，调度员自动派 worker 逐个完成 | `/dispatcher` |
 
-## dispatcher
+### dispatcher
 
 只需提供一份任务清单，主会话即担任**调度员**，串行派 worker（SubAgent）逐个完成。调度员仅承担两项职责：**派工、验收**——全部实际工作由 worker 完成。
 
@@ -39,7 +96,7 @@
 
 用户显式调用（user-invoked）：模型不会自动触发，仅响应用户指令，启动时机完全由用户控制。
 
-## 安装
+### 安装
 
 ```bash
 git clone https://github.com/Buktal/skills.git
@@ -47,6 +104,6 @@ cp -r skills/dispatcher <所用 agent 的 skill 目录>/
 # 常见位置：~/.agents/skills/（跨工具通用约定），或所用工具自身的 skill 目录
 ```
 
-## License
+### 许可证
 
 本项目基于 [MIT License](LICENSE) 开源。
